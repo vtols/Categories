@@ -3,20 +3,18 @@ Load Category.
 Definition Mono
            {C : Category}
            {a b : Ob C}
-           (f : Hom _ a b)
-  :=
-  forall (c : Ob C),
-    forall (g h : Hom _ b c),
-      Comp _ f g = Comp _ f h -> g = h.
+           (f : Hom _ a b) :=
+  forall (c : Ob C)
+         (g h : Hom _ b c),
+    Comp _ f g = Comp _ f h -> g = h.
 
 Definition Epi
            {C : Category}
            {b c: Ob C}
-           (f : Hom _ b c)
-  :=
-  forall (a : Ob C),
-    forall (g h : Hom _ a b),
-      Comp _ g f = Comp _ h f -> g = h.
+           (f : Hom _ b c) :=
+  forall (a : Ob C)
+         (g h : Hom _ a b),
+    Comp _ g f = Comp _ h f -> g = h.
 
 Definition Bi
            {C : Category}
@@ -27,8 +25,7 @@ Definition InvOf
            {C : Category}
            {a b : Ob C}
            (f : Hom _ a b)
-           (g : Hom _ b a)
-  := Comp _ f g = Id _.
+           (g : Hom _ b a) := Comp _ f g = Id _.
 
 Record Iso
            {C : Category}
@@ -47,6 +44,7 @@ Theorem MonoEpi : forall {C : Category}
   intros.
   split.
 
+  Check Mono.
   unfold Mono.
   intros.
   rewrite <- (idl _ _ _ g).
