@@ -30,41 +30,43 @@ Definition InvOf
            (g : Hom _ b a)
   := Comp _ f g = Id _.
 
-Definition Iso
+Record Iso
            {C : Category}
            {a b : Ob C}
-           (f : Hom _ a b)
-  := exists g, InvOf f g /\ InvOf g f.
+           (f : Hom _ a b) :=
+  {
+    inv_f:     Hom _ b a;
+    inv_left:  Comp _ inv_f f = Id _;
+    inv_right: Comp _ f inv_f = Id _
+  }.
 
 Theorem MonoEpi : forall {C : Category}
                          {a b : Ob C} 
                          (f : Hom _ a b),
                     Iso f -> Mono f /\ Epi f.
   intros.
-  unfold Iso, InvOf in H.
+  decompose record (Iso f).
   split.
 
   unfold Mono.
   intros.
-  elim H.
-  intros.
-  destruct H1.
-  rewrite <- (idl _ _ _ g), <- (idl _ _ _ h).
-  rewrite <- H2.
-  rewrite <- (assoc _ x f g), <- (assoc _ x f h).
-  rewrite H0.
+  rewrite <- (idl _ _ _ g).
+  rewrite <- (idl _ _ _ h).
+  rewrite <- (inv_left f X).
+  rewrite <- (assoc _ (inv_f f X) f g).
+  rewrite <- (assoc _ (inv_f f X) f h).
+  rewrite H.
   trivial.
 
   unfold Epi.
   intros.
-  elim H.
-  intros.
-  destruct H1.
-  rewrite <- (idr _ _ _ g), <- (idr _ _ _ h).
-  rewrite <- H1.
-  rewrite (assoc _ g f x), (assoc _ h f x).
-  rewrite H0.
-  trivial.
+  rewrite <- (idr _ _ _ g).
+  rewrite <- (idr _ _ _ h).
+  rewrite <- (inv_right f X).
+  rewrite (assoc _ g f (inv_f f X)).
+  rewrite (assoc _ h f (inv_f f X)).
+  rewrite H.
+  trivial.  
 Qed.
 
 Definition RetractOf {C : Category} a b :=
@@ -72,47 +74,48 @@ Definition RetractOf {C : Category} a b :=
          (g: Hom _ b a),
     Comp C f g = @Id _ a.
 
-Definition Initial {C : Category} (a : Ob C) :=
-  forall (b : Ob C),
-  exists (f : Hom _ a b),
-  forall (g : Hom _ a b),
-    f = g.
+Record Terminal {C : Category} (a : Ob C) :=
+  {
+    morph_from:      forall b,
+                       Hom _ b a;
+    uniq_morph_from: forall {b} (g : Hom _ b a),
+                       morph_from    b = g
+  }.
 
-Definition Terminal {C : Category} (a : Ob C) :=
-  forall (b : Ob C),
-  exists (f : Hom _ b a),
-  forall (g : Hom _ b a),
-    f = g.
+Record Initial {C : Category} (a : Ob C) :=
+  {
+    morph_to:        forall b,
+                       Hom _ a b;
+    uniq_morph_to:   forall {b} (g : Hom _ a b),
+                       morph_to    b = g
+  }.
 
-Definition Isomorph {C : Category} (a b : Ob C) :=
-  exists (f : Hom _ a b), Iso f.
+Record Isomorph {C : Category} (a b : Ob C) :=
+  {
+    iso_f:>     Hom _ a b;
+    is_iso:>    Iso iso_f
+  }.
+
+Variable C : Category.
+Variable a b : Ob C.
+Variable iz : Isomorph a b.
+Check inv_f.
+(*Check inv_f iz iz.*)
 
 Theorem UniqueInitial :
   forall {C : Category},
   forall (a b : Ob C), Initial a -> Initial b -> Isomorph a b.
-  intros C a b Ha Hb.
-  unfold Initial in Ha, Hb.
-  assert (Hab := Ha b).
-  assert (Haa := Ha a).
-  assert (Hba := Hb a).
-  assert (Hbb := Hb b).
-  elim Hab.
-  intros u _.
-  elim Hba.
-  intros v _.
-  elim Haa.
-  intros ia H.
-  elim Hbb.
-  intros ib G.
-
-  unfold Isomorph, Iso, InvOf.
-  exists u, v.
-  
-  split.
-
-  rewrite <- (H (Comp _ u v)), <- (H (Id _)).
-  trivial.
-
-  rewrite <- (G (Comp _ v u)), <- (G (Id _)).
-  trivial.
-Defined.
+  intros C a b Ia Ib.
+  destruct Ia as [mab uab], Ib as [mba uba].
+  assert (u := mab b).
+  assert (v := mba a).
+  assert (Euv := (uab a (Comp _ u v))).
+  assert (Evu := (uba b (Comp _ v u))).
+  assert (Ea := (uab a (Id _ ))).
+  assert (Eb := (uba b (Id _ ))).
+  rewrite Ea in Euv.
+  rewrite Eb in Evu.
+  symmetry in Euv, Evu.
+  assert (Iso_u := Build_Iso _ _ _ u v Evu Euv).
+  apply (Build_Isomorph _ _ _ u Iso_u).
+Qed.
