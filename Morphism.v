@@ -45,7 +45,6 @@ Theorem MonoEpi : forall {C : Category}
                          (f : Hom _ a b),
                     Iso f -> Mono f /\ Epi f.
   intros.
-  decompose record (Iso f).
   split.
 
   unfold Mono.
@@ -102,20 +101,22 @@ Variable iz : Isomorph a b.
 Check inv_f.
 (*Check inv_f iz iz.*)
 
-Theorem UniqueInitial :
-  forall {C : Category},
-  forall (a b : Ob C), Initial a -> Initial b -> Isomorph a b.
+Theorem UniqueInitial : forall {C : Category},
+                        forall (a b : Ob C),
+                          Initial a ->
+                          Initial b ->
+                          Isomorph a b.
   intros C a b Ia Ib.
-  destruct Ia as [mab uab], Ib as [mba uba].
+  destruct Ia as [mab Hab], Ib as [mba Hba].
   assert (u := mab b).
   assert (v := mba a).
-  assert (Euv := (uab a (Comp _ u v))).
-  assert (Evu := (uba b (Comp _ v u))).
-  assert (Ea := (uab a (Id _ ))).
-  assert (Eb := (uba b (Id _ ))).
-  rewrite Ea in Euv.
-  rewrite Eb in Evu.
-  symmetry in Euv, Evu.
-  assert (Iso_u := Build_Iso _ _ _ u v Evu Euv).
-  apply (Build_Isomorph _ _ _ u Iso_u).
+  refine (Build_Isomorph _ _ _ u _).
+  refine (Build_Iso _ _ _ u v _ _).
+      rewrite <- (Hba _ (Comp _ v u)).
+      rewrite (Hba _ (Id _)).
+      trivial.
+
+      rewrite <- (Hab _ (Comp _ u v)).
+      rewrite (Hab _ (Id _)).
+      trivial.
 Qed.
